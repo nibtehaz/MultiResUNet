@@ -47,13 +47,20 @@ Therefore, with the fusion of *MultiRes* blocks and *Res* paths, we obtain the p
 
 The model architecture codes can be found in
 
-* [2D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/MultiResUNet.py)
+### Tensorflow
+* [2D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/tensorflow/MultiResUNet.py)
 
-* [3D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/MultiResUNet3D.py)
+* [3D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/tensorflow/MultiResUNet3D.py)
+
+### Pytorch
+* [2D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/pytorch/MultiResUNet.py)
+
+* [3D Model](https://github.com/nibtehaz/MultiResUNet/blob/master/pytorch/MultiResUNet3D.py)
+
 
 ## Demo
 
-A demo can be found in [here](https://github.com/nibtehaz/MultiResUNet/blob/master/Demo.ipynb)
+A demo can be found in [here](https://github.com/nibtehaz/MultiResUNet/blob/master/tensorflow/Demo.ipynb) (tensorflow)
 
 
 ## License
