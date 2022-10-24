@@ -85,12 +85,13 @@ class Respath(torch.nn.Module):
 	ResPath
 	
 	Arguments:
-		num_filters {int} -- Number of filters going in the respath
+		num_in_filters {int} -- Number of filters going in the respath
+		num_out_filters {int} -- Number of filters going out the respath
 		respath_length {int} -- length of ResPath
 		
 	'''
 
-	def __init__(self, num_filters, respath_length):
+	def __init__(self, num_in_filters, num_out_filters, respath_length):
 	
 		super().__init__()
 		
@@ -101,15 +102,15 @@ class Respath(torch.nn.Module):
 
 		for i in range(self.respath_length):
 			if(i==0):
-				self.shortcuts.append(Conv3d_batchnorm(num_filters, num_filters, kernel_size = (1,1,1), activation='None'))
-				self.convs.append(Conv3d_batchnorm(num_filters, num_filters, kernel_size = (3,3,3),activation='relu'))
+				self.shortcuts.append(Conv3d_batchnorm(num_in_filters, num_out_filters, kernel_size = (1,1,1), activation='None'))
+				self.convs.append(Conv3d_batchnorm(num_in_filters, num_out_filters, kernel_size = (3,3,3),activation='relu'))
 
 				
 			else:
-				self.shortcuts.append(Conv3d_batchnorm(num_filters, num_filters, kernel_size = (1,1,1), activation='None'))
-				self.convs.append(Conv3d_batchnorm(num_filters, num_filters, kernel_size = (3,3,3), activation='relu'))
+				self.shortcuts.append(Conv3d_batchnorm(num_out_filters, num_out_filters, kernel_size = (1,1,1), activation='None'))
+				self.convs.append(Conv3d_batchnorm(num_out_filters, num_out_filters, kernel_size = (3,3,3), activation='relu'))
 
-			self.bns.append(torch.nn.BatchNorm3d(num_filters))
+			self.bns.append(torch.nn.BatchNorm3d(num_out_filters))
 		
 	
 	def forward(self,x):
@@ -150,24 +151,24 @@ class MultiResUnet(torch.nn.Module):
 		self.multiresblock1 = Multiresblock(input_channels,32)
 		self.in_filters1 = int(32*self.alpha*0.167)+int(32*self.alpha*0.333)+int(32*self.alpha* 0.5)
 		self.pool1 =  torch.nn.MaxPool3d(2)
-		self.respath1 = Respath(self.in_filters1,respath_length=4)
+		self.respath1 = Respath(self.in_filters1,32,respath_length=4)
 
 		self.multiresblock2 = Multiresblock(self.in_filters1,32*2)
 		self.in_filters2 = int(32*2*self.alpha*0.167)+int(32*2*self.alpha*0.333)+int(32*2*self.alpha* 0.5)
 		self.pool2 =  torch.nn.MaxPool3d(2)
-		self.respath2 = Respath(self.in_filters2,respath_length=3)
+		self.respath2 = Respath(self.in_filters2,32*2,respath_length=3)
 	
 	
 		self.multiresblock3 =  Multiresblock(self.in_filters2,32*4)
 		self.in_filters3 = int(32*4*self.alpha*0.167)+int(32*4*self.alpha*0.333)+int(32*4*self.alpha* 0.5)
 		self.pool3 =  torch.nn.MaxPool3d(2)
-		self.respath3 = Respath(self.in_filters3,respath_length=2)
+		self.respath3 = Respath(self.in_filters3,32*4,respath_length=2)
 	
 	
 		self.multiresblock4 = Multiresblock(self.in_filters3,32*8)
 		self.in_filters4 = int(32*8*self.alpha*0.167)+int(32*8*self.alpha*0.333)+int(32*8*self.alpha* 0.5)
 		self.pool4 =  torch.nn.MaxPool3d(2)
-		self.respath4 = Respath(self.in_filters4,respath_length=1)
+		self.respath4 = Respath(self.in_filters4,32*8,respath_length=1)
 	
 	
 		self.multiresblock5 = Multiresblock(self.in_filters4,32*16)
@@ -175,22 +176,22 @@ class MultiResUnet(torch.nn.Module):
 	 
 		# Decoder path
 		self.upsample6 = torch.nn.ConvTranspose3d(self.in_filters5,32*8,kernel_size=(2,2,2),stride=(2,2,2))  
-		self.concat_filters1 = 32*8 + self.in_filters4
+		self.concat_filters1 = 32*8 *2
 		self.multiresblock6 = Multiresblock(self.concat_filters1,32*8)
 		self.in_filters6 = int(32*8*self.alpha*0.167)+int(32*8*self.alpha*0.333)+int(32*8*self.alpha* 0.5)
 
 		self.upsample7 = torch.nn.ConvTranspose3d(self.in_filters6,32*4,kernel_size=(2,2,2),stride=(2,2,2))  
-		self.concat_filters2 = 32*4 + self.in_filters3
+		self.concat_filters2 = 32*4 *2
 		self.multiresblock7 = Multiresblock(self.concat_filters2,32*4)
 		self.in_filters7 = int(32*4*self.alpha*0.167)+int(32*4*self.alpha*0.333)+int(32*4*self.alpha* 0.5)
 	
 		self.upsample8 = torch.nn.ConvTranspose3d(self.in_filters7,32*2,kernel_size=(2,2,2),stride=(2,2,2))
-		self.concat_filters3 = 32*2 + self.in_filters2
+		self.concat_filters3 = 32*2 *2
 		self.multiresblock8 = Multiresblock(self.concat_filters3,32*2)
 		self.in_filters8 = int(32*2*self.alpha*0.167)+int(32*2*self.alpha*0.333)+int(32*2*self.alpha* 0.5)
 	
 		self.upsample9 = torch.nn.ConvTranspose3d(self.in_filters8,32,kernel_size=(2,2,2),stride=(2,2,2))
-		self.concat_filters4 = 32 + self.in_filters1
+		self.concat_filters4 = 32 *2
 		self.multiresblock9 = Multiresblock(self.concat_filters4,32)
 		self.in_filters9 = int(32*self.alpha*0.167)+int(32*self.alpha*0.333)+int(32*self.alpha* 0.5)
 
